@@ -774,7 +774,7 @@
     });
   }
 
-  /* ---------- Partículas del hero (granos de elote y chispas de chile) ---------- */
+  /* ---------- Partículas del hero (elotitos que van subiendo) ---------- */
   function initParticulas() {
     const lienzo = $('#particulas');
     const hero = $('.hero');
@@ -788,21 +788,27 @@
     const particulas = [];
     const raton = { x: -999, y: -999 };
 
-    const crear = (inicio) => {
-      const r = Math.random();
-      const tipo = r < 0.24 ? 'chile' : r < 0.36 ? 'queso' : 'grano';
-      return {
-        tipo,
-        x: Math.random() * ancho,
-        y: inicio ? Math.random() * alto : alto + 24,
-        tam: tipo === 'grano' ? 3 + Math.random() * 5 : 1.2 + Math.random() * 2.2,
-        vy: 0.18 + Math.random() * 0.6 + (tipo === 'chile' ? 0.4 : 0),
-        fase: Math.random() * 6.28,
-        osc: 0.3 + Math.random() * 0.9,
-        giro: Math.random() * 6.28,
-        vg: (Math.random() - 0.5) * 0.03,
-      };
+    // El dibujo del elote se pinta una sola vez en un lienzo aparte; cada partícula solo lo copia.
+    const sprite = document.createElement('canvas');
+    sprite.width = 56;
+    sprite.height = 103;
+    let spriteListo = false;
+    const dibujoElote = new Image();
+    dibujoElote.onload = () => {
+      sprite.getContext('2d').drawImage(dibujoElote, 0, 0, 56, 103);
+      spriteListo = true;
     };
+    dibujoElote.src = 'assets/img/elote-burbuja.svg';
+
+    const crear = (inicio) => ({
+      x: Math.random() * ancho,
+      y: inicio ? Math.random() * alto : alto + 40,
+      tam: 16 + Math.random() * 16, // alto del elotito en px
+      vy: 0.18 + Math.random() * 0.6,
+      fase: Math.random() * 6.28,
+      osc: 0.3 + Math.random() * 0.9,
+      giro: (Math.random() - 0.5) * 0.8,
+    });
 
     const medir = () => {
       const r = lienzo.getBoundingClientRect();
@@ -812,7 +818,7 @@
       lienzo.width = Math.round(ancho * dpr);
       lienzo.height = Math.round(alto * dpr);
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      const total = ancho < 700 ? 34 : 76;
+      const total = ancho < 700 ? 14 : 30;
       while (particulas.length < total) particulas.push(crear(true));
       particulas.length = total;
     };
@@ -822,7 +828,6 @@
       for (const p of particulas) {
         p.y -= p.vy;
         p.x += Math.sin(t * 0.001 * p.osc + p.fase) * 0.35;
-        p.giro += p.vg;
         const dx = p.x - raton.x;
         const dy = p.y - raton.y;
         const d2 = dx * dx + dy * dy;
@@ -832,40 +837,14 @@
           p.x += (dx / d) * f;
           p.y += (dy / d) * f;
         }
-        if (p.y < -24) Object.assign(p, crear(false));
+        if (p.y < -40) Object.assign(p, crear(false));
         const alfa = clamp(Math.min(p.y / 90, (alto - p.y) / 60, 1) + 0.15, 0, 1);
+        if (!spriteListo) continue;
         ctx.save();
         ctx.translate(p.x, p.y);
-        ctx.rotate(p.giro);
-        ctx.globalAlpha = alfa;
-        if (p.tipo === 'grano') {
-          ctx.fillStyle = 'rgba(255,194,26,0.16)';
-          ctx.beginPath();
-          ctx.arc(0, 0, p.tam * 2.4, 0, 6.283);
-          ctx.fill();
-          ctx.fillStyle = '#ffc21a';
-          ctx.beginPath();
-          ctx.ellipse(0, 0, p.tam * 0.72, p.tam, 0, 0, 6.283);
-          ctx.fill();
-          ctx.fillStyle = 'rgba(255,255,255,0.45)';
-          ctx.beginPath();
-          ctx.ellipse(-p.tam * 0.2, -p.tam * 0.3, p.tam * 0.18, p.tam * 0.36, 0, 0, 6.283);
-          ctx.fill();
-        } else if (p.tipo === 'chile') {
-          ctx.fillStyle = 'rgba(229,53,43,0.22)';
-          ctx.beginPath();
-          ctx.arc(0, 0, p.tam * 3, 0, 6.283);
-          ctx.fill();
-          ctx.fillStyle = '#ff5a36';
-          ctx.beginPath();
-          ctx.arc(0, 0, p.tam, 0, 6.283);
-          ctx.fill();
-        } else {
-          ctx.fillStyle = '#fff3d3';
-          ctx.beginPath();
-          ctx.arc(0, 0, p.tam * 1.2, 0, 6.283);
-          ctx.fill();
-        }
+        ctx.rotate(p.giro + Math.sin(t * 0.001 * p.osc + p.fase) * 0.35);
+        ctx.globalAlpha = alfa * 0.75;
+        ctx.drawImage(sprite, (-p.tam * 0.545) / 2, -p.tam / 2, p.tam * 0.545, p.tam);
         ctx.restore();
       }
     };
@@ -908,7 +887,7 @@
 
     let renderer;
     try {
-      renderer = new T.WebGLRenderer({ canvas: lienzo, antialias: true, alpha: true, powerPreference: 'high-performance' });
+      renderer = new T.WebGLRenderer({ canvas: lienzo, antialias: (window.devicePixelRatio || 1) < 2, alpha: true, powerPreference: 'high-performance' });
     } catch (error) {
       return;
     }
@@ -1039,7 +1018,9 @@
     escena.add(polvo);
 
     // Tamaño
+    let detenido = false;
     const ajustar = () => {
+      if (detenido) return;
       // clientWidth/clientHeight no se alteran por la animación de entrada (scale) del contenedor
       const ancho = anfitrion.clientWidth;
       const alto = anfitrion.clientHeight;
@@ -1064,6 +1045,40 @@
     const reloj = new T.Clock();
     let visible = true;
     let raf = 0;
+
+    // Vigilante de rendimiento: si el equipo no aguanta la escena, baja la resolución solo
+    // y, si aun así va lento, deja el elote vectorial (el de respaldo) en lugar de trabarse.
+    let ventanaInicio = 0;
+    let cuadros = 0;
+    let calentar = 3; // los primeros cuadros (compilar shaders) no cuentan
+    let lentos = 0;
+    const vigilar = (ahora) => {
+      if (calentar > 0) {
+        calentar -= 1;
+        return;
+      }
+      if (!ventanaInicio) {
+        ventanaInicio = ahora;
+        cuadros = 0;
+        return;
+      }
+      cuadros += 1;
+      const duracionVentana = ahora - ventanaInicio;
+      if (duracionVentana < 1500) return;
+      const promedio = duracionVentana / cuadros; // ms por cuadro
+      ventanaInicio = ahora;
+      cuadros = 0;
+      lentos = promedio > 45 ? lentos + 1 : 0; // menos de ~22 cuadros/s
+      if (lentos < 2) return;
+      lentos = 0;
+      if (renderer.getPixelRatio() > 1) {
+        renderer.setPixelRatio(1);
+      } else {
+        detenido = true;
+        anfitrion.classList.remove('is-3d');
+        renderer.dispose();
+      }
+    };
     const pintar = () => {
       const t = reloj.getElapsedTime();
       actual.x += (objetivo.x - actual.x) * 0.05;
@@ -1077,12 +1092,14 @@
       polvo.position.y = Math.sin(t * 0.7) * 0.2;
       renderer.render(escena, camara);
     };
-    const bucle = () => {
+    const bucle = (ahora) => {
       pintar();
-      raf = visible && !document.hidden ? requestAnimationFrame(bucle) : 0;
+      vigilar(ahora);
+      raf = visible && !document.hidden && !detenido ? requestAnimationFrame(bucle) : 0;
+      if (!raf) ventanaInicio = 0; // en pausa: la medición se reinicia al volver
     };
     const arrancar = () => {
-      if (!raf && visible && !document.hidden) raf = requestAnimationFrame(bucle);
+      if (!raf && visible && !document.hidden && !detenido) raf = requestAnimationFrame(bucle);
     };
 
     if (reduce) {

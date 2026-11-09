@@ -416,25 +416,24 @@ address {
 
 .cargador__granos i {
   position: absolute;
-  bottom: -20px;
-  width: 9px;
-  height: 12px;
-  border-radius: 50%;
-  background: var(--corn);
+  bottom: -40px;
+  width: 18px;
+  height: 33px;
+  background: url("assets/img/elote-burbuja.svg") center / contain no-repeat;
   opacity: 0;
   animation: granoSube 2.6s ease-in infinite;
 }
 
 .cargador__granos i:nth-child(1) { left: 8%; animation-delay: 0s; }
-.cargador__granos i:nth-child(2) { left: 18%; animation-delay: 0.5s; background: var(--chile); }
+.cargador__granos i:nth-child(2) { left: 18%; animation-delay: 0.5s; }
 .cargador__granos i:nth-child(3) { left: 30%; animation-delay: 1.1s; }
-.cargador__granos i:nth-child(4) { left: 42%; animation-delay: 0.3s; background: var(--corn-hi); }
+.cargador__granos i:nth-child(4) { left: 42%; animation-delay: 0.3s; }
 .cargador__granos i:nth-child(5) { left: 55%; animation-delay: 0.9s; }
-.cargador__granos i:nth-child(6) { left: 66%; animation-delay: 0.1s; background: var(--chile); }
+.cargador__granos i:nth-child(6) { left: 66%; animation-delay: 0.1s; }
 .cargador__granos i:nth-child(7) { left: 76%; animation-delay: 1.4s; }
-.cargador__granos i:nth-child(8) { left: 85%; animation-delay: 0.7s; background: var(--corn-hi); }
+.cargador__granos i:nth-child(8) { left: 85%; animation-delay: 0.7s; }
 .cargador__granos i:nth-child(9) { left: 93%; animation-delay: 1.8s; }
-.cargador__granos i:nth-child(10) { left: 3%; animation-delay: 1.6s; background: var(--corn-hi); }
+.cargador__granos i:nth-child(10) { left: 3%; animation-delay: 1.6s; }
 
 .cargador__centro {
   position: relative;
